@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="fw-bold">Asset Details</h2>
+            <p class="text-muted">View complete asset information</p>
+        </div>
+        <div class="col text-end">
+            <a href="{% url 'asset_update' asset.id %}" class="btn btn-warning">
+                <i class="bi bi-pencil"></i> Edit
+            </a>
+            <a href="{% url 'asset_delete' asset.id %}" class="btn btn-danger">
+                <i class="bi bi-trash"></i> Delete
+            </a>
+            <a href="{% url 'asset_list' %}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Basic Information Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-info-circle"></i> Basic Information</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th style="width: 200px;">Asset Name</th>
+                            <td>{{ asset.name }}</td>
+                        </tr>
+                        <tr>
+                            <th>Serial Number</th>
+                            <td>{{ asset.serial_number }}</td>
+                        </tr>
+                        <tr>
+                            <th>Category</th>
+                            <td>{{ asset.category.name|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Status</th>
+                            <td>
+                                <span class="badge {% if asset.status == 'available' %}bg-success{% elif asset.status == 'assigned' %}bg-warning{% elif asset.status == 'maintenance' %}bg-danger{% else %}bg-secondary{% endif %} fs-6">
+                                    {{ asset.get_status_display }}
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Location</th>
+                            <td>{{ asset.location|default:"-" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Hardware Details Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-cpu"></i> Hardware Details</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th style="width: 200px;">Manufacturer</th>
+                            <td>{{ asset.manufacturer|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Model Number</th>
+                            <td>{{ asset.model_number|default:"-" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Financial Details Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-calculator"></i> Financial Details</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th style="width: 200px;">Purchase Date</th>
+                            <td>{{ asset.purchase_date|date:"Y-m-d"|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Purchase Cost</th>
+                            <td>{% if asset.purchase_cost %}${% endif %}{{ asset.purchase_cost|default:"-" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Warranty Expiry</th>
+                            <td>
+                                {{ asset.warranty_expiry|date:"Y-m-d"|default:"-" }}
+                                {% if asset.is_warranty_expired %}
+                                    <span class="badge bg-danger ms-2">Expired</span>
+                                {% elif asset.warranty_expiry %}
+                                    <span class="badge bg-warning ms-2">Active</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Assignment Details Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-person"></i> Assignment Details</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th style="width: 200px;">Assigned To</th>
+                            <td>{{ asset.assigned_to.get_full_name|default:asset.assigned_to.username|default:"Not Assigned" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Assigned Date</th>
+                            <td>{{ asset.assigned_date|date:"Y-m-d"|default:"-" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Notes Card -->
+            {% if asset.notes %}
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-chat"></i> Notes</h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">{{ asset.notes|linebreaks }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Custom Fields Card -->
+            {% if custom_fields %}
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-tags"></i> Custom Fields</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        {% for field in custom_fields %}
+                        <div class="list-group-item">
+                            <strong>{{ field.label }}:</strong><br>
+                            {% if field.type == 'boolean' %}
+                                <span class="badge {% if field.value == 'True' %}bg-success{% else %}bg-secondary{% endif %}">
+                                    {{ field.value|yesno:"Yes,No" }}
+                                </span>
+                            {% else %}
+                                {{ field.value }}
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Audit Information Card -->
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0"><i class="bi bi-clock-history"></i> Audit Information</h5>
+                </div>
+                <div class="card-body">
+                    <small class="text-muted">
+                        <strong>Created By:</strong> {{ asset.created_by.get_full_name|default:asset.created_by.username|default:"System" }}<br>
+                        <strong>Created At:</strong> {{ asset.created_at|date:"Y-m-d H:i" }}<br>
+                        <strong>Last Updated:</strong> {{ asset.updated_at|date:"Y-m-d H:i" }}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

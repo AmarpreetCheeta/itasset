@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="fw-bold">Custom Fields Management</h2>
+            <p class="text-muted">Define additional fields for assets</p>
+        </div>
+        <div class="col text-end">
+            <a href="{% url 'custom_field_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Add Custom Field
+            </a>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Label</th>
+                            <th>Field Name</th>
+                            <th>Type</th>
+                            <th>Required</th>
+                            <th>Category</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for field in fields %}
+                        <tr>
+                            <td><strong>{{ field.label }}</strong></td>
+                            <td><code>{{ field.name }}</code></td>
+                            <td>{{ field.get_field_type_display }}</td>
+                            <td>
+                                {% if field.is_required %}
+                                <span class="badge bg-danger">Required</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Optional</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ field.category.name|default:"All" }}</td>
+                            <td>
+                                {% if field.is_active %}
+                                <span class="badge bg-success">Active</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'custom_field_update' field.id %}" class="btn btn-sm btn-warning">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{% url 'custom_field_delete' field.id %}" class="btn btn-sm btn-danger">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4">
+                                <i class="bi bi-gear fs-1 text-muted"></i>
+                                <p class="text-muted mt-2">No custom fields defined yet.</p>
+                                <a href="{% url 'custom_field_create' %}" class="btn btn-primary btn-sm">
+                                    Create your first custom field
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

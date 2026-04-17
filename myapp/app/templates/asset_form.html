@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="fw-bold">{{ title }}</h2>
+            <p class="text-muted">Fill in the asset details below</p>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-body">
+            <form method="post" novalidate>
+                {% csrf_token %}
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5 class="mb-3">Basic Information</h5>
+                        {{ form.name|as_crispy_field }}
+                        {{ form.serial_number|as_crispy_field }}
+                        {{ form.category|as_crispy_field }}
+                        {{ form.status|as_crispy_field }}
+                    </div>
+                    <div class="col-md-6">
+                        <h5 class="mb-3">Hardware Details</h5>
+                        {{ form.manufacturer|as_crispy_field }}
+                        {{ form.model_number|as_crispy_field }}
+                        {{ form.location|as_crispy_field }}
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5 class="mb-3">Financial Details</h5>
+                        {{ form.purchase_date|as_crispy_field }}
+                        {{ form.purchase_cost|as_crispy_field }}
+                        {{ form.warranty_expiry|as_crispy_field }}
+                    </div>
+                    <div class="col-md-6">
+                        <h5 class="mb-3">Assignment</h5>
+                        {{ form.assigned_to|as_crispy_field }}
+                        {{ form.assigned_date|as_crispy_field }}
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-12">
+                        <h5 class="mb-3">Additional Information</h5>
+                        {{ form.notes|as_crispy_field }}
+                    </div>
+                </div>
+                
+                <!-- Custom Fields Section -->
+                {% for field in form %}
+                    {% if field.name|slice:":7" == "custom_" %}
+                        {% if forloop.first %}
+                            <hr class="my-4">
+                            <h5 class="mb-3">Custom Fields</h5>
+                        {% endif %}
+                        {{ field|as_crispy_field }}
+                    {% endif %}
+                {% endfor %}
+                
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Save Asset
+                    </button>
+                    <a href="{% url 'asset_list' %}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

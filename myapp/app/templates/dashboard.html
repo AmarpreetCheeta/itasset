@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="fw-bold">Dashboard</h2>
+            <p class="text-muted">Welcome back, {{ user.get_full_name|default:user.username }}!</p>
+        </div>
+    </div>
+    
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card stat-card bg-primary">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-2 text-white-50">Total Assets</h6>
+                            <h2 class="card-title mb-0 text-white">{{ total_assets }}</h2>
+                        </div>
+                        <i class="bi bi-database"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card bg-success">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-2 text-white-50">Available</h6>
+                            <h2 class="card-title mb-0 text-white">{{ available_assets }}</h2>
+                        </div>
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card bg-warning">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-2 text-white-50">Assigned</h6>
+                            <h2 class="card-title mb-0 text-white">{{ assigned_assets }}</h2>
+                        </div>
+                        <i class="bi bi-person-check"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card bg-info">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-2 text-white-50">Total Value</h6>
+                            <h2 class="card-title mb-0 text-white">${{ total_value|floatformat:0 }}</h2>
+                        </div>
+                        <i class="bi bi-currency-dollar"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row g-4">
+        <!-- Chart -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Asset Distribution by Status</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="statusChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Categories -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">Assets by Category</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="categoryChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Assets -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Recent Assets</h5>
+                    <a href="{% url 'asset_list' %}" class="btn btn-sm btn-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Serial Number</th>
+                                    <th>Category</th>
+                                    <th>Status</th>
+                                    <th>Assigned To</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for asset in recent_assets %}
+                                <tr>
+                                    <td><a href="{% url 'asset_detail' asset.id %}">{{ asset.name }}</a></td>
+                                    <td>{{ asset.serial_number }}</td>
+                                    <td>{{ asset.category.name|default:"-" }}</td>
+                                    <td>
+                                        <span class="badge {% if asset.status == 'available' %}bg-success{% elif asset.status == 'assigned' %}bg-warning{% elif asset.status == 'maintenance' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                            {{ asset.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ asset.assigned_to.get_full_name|default:asset.assigned_to.username|default:"-" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center">No assets found.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Alerts -->
+        <div class="col-12">
+            <div class="card border-warning">
+                <div class="card-header bg-warning text-white">
+                    <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Warranty Alerts</h5>
+                </div>
+                <div class="card-body">
+                    {% if expiring_warranty > 0 %}
+                        <div class="alert alert-warning">
+                            <i class="bi bi-clock-history"></i> {{ expiring_warranty }} asset(s) have warranty expiring in the next 30 days.
+                        </div>
+                    {% else %}
+                        <p class="text-muted mb-0">No warranty expirations in the next 30 days.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Status Chart
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Available', 'Assigned', 'Maintenance', 'Retired'],
+            datasets: [{
+                data: [{{ available_assets }}, {{ assigned_assets }}, {{ maintenance_assets }}, {{ retired_assets }}],
+                backgroundColor: ['#4caf50', '#ff9800', '#f44336', '#9e9e9e'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+    
+    // Category Chart
+    const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+    new Chart(categoryCtx, {
+        type: 'bar',
+        data: {
+            labels: [{% for category in categories %}'{{ category.name }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+            datasets: [{
+                label: 'Number of Assets',
+                data: [{% for category in categories %}{{ category.asset_count }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                backgroundColor: '#4361ee',
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}
