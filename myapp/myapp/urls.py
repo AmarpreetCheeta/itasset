@@ -1,12 +1,12 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
-from app.views import signup_view
+from app.views import signup_view, login_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('app.urls')),
-    path('login/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
+    path('login/', login_view, name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('signup/', signup_view, name='signup'),
     path('password-change/', auth_views.PasswordChangeView.as_view(

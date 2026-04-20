@@ -1,22 +1,30 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.db import models
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from .models import Asset, AssetCategory, CustomFieldDefinition
 
+# Update: 20 April 2026
 class SignUpForm(UserCreationForm):
     email = forms.EmailField(required=True, widget=forms.EmailInput(attrs={'class': 'form-control'}))
     first_name = forms.CharField(max_length=30, required=True, widget=forms.TextInput(attrs={'class': 'form-control'}))
     last_name = forms.CharField(max_length=30, required=True, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    company_id = forms.CharField(max_length=50, required=True, help_text="Your company's unique ID", widget=forms.TextInput(attrs={'class': 'form-control'}))
 
     class Meta:
         model = User
-        fields = ('username', 'first_name', 'last_name', 'email', 'password1', 'password2')
+        fields = ('username', 'first_name', 'last_name', 'email', 'company_id', 'password1', 'password2')
 
+
+# New: 20 April 2026:
+class CompanyLoginForm(AuthenticationForm):
+    company_id = forms.CharField(max_length=50, label="Company ID", widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter Company ID'}))
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        for field in self.fields:
-            self.fields[field].widget.attrs['class'] = 'form-control'
+        self.fields['username'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Username or Email'})
+        self.fields['password'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Password'})
+
 
 class AssetBaseForm(forms.ModelForm):
     class Meta:

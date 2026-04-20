@@ -3,17 +3,50 @@ from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator
 from django.utils import timezone
 
+
+# New Company model
+class Company(models.Model):
+    name = models.CharField(max_length=200, unique=True, null=True)
+    company_id = models.CharField(max_length=50, unique=True, help_text="Unique identifier for login", null=True)
+    address = models.TextField(blank=True, null=True)
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    email = models.EmailField(blank=True, null=True)
+    is_active = models.BooleanField(default=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True, null=True)
+
+    class Meta:
+        verbose_name_plural = "Companies"
+
+    def __str__(self):
+        return self.name
+
+# Add company ForeignKey to User (via OneToOne profile, but simpler: add field directly)
+# Since we can't modify User directly easily, create a UserProfile
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='users', null=True)
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.company.name}"
+    
+
 class AssetCategory(models.Model):
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(blank=True)
     icon = models.CharField(max_length=50, default='bi-laptop')
+    #New 20 April 2026:
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='categories', null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name_plural = "Asset Categories"
+        #New 20 April 2026:
+        unique_together = ['name', 'company']  # names unique per company
 
     def __str__(self):
         return self.name
+    
+
 
 class Asset(models.Model):
     STATUS_CHOICES = [
@@ -51,11 +84,13 @@ class Asset(models.Model):
     
     # Audit Fields
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_assets')
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='assets', null=True)   # NEW: 20 April 2026
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['-created_at']
+        unique_together = ['serial_number', 'company']   # serial number unique per company
 
     def __str__(self):
         return f"{self.name} ({self.serial_number})"
@@ -65,6 +100,8 @@ class Asset(models.Model):
         if self.warranty_expiry:
             return self.warranty_expiry < timezone.now().date()
         return False
+    
+
 
 class CustomFieldDefinition(models.Model):
     FIELD_TYPES = [
@@ -87,12 +124,14 @@ class CustomFieldDefinition(models.Model):
     help_text = models.CharField(max_length=200, blank=True)
     category = models.ForeignKey(AssetCategory, on_delete=models.SET_NULL, null=True, blank=True, 
                                   help_text="Leave blank for all categories")
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='custom_fields', null=True)   # New: 20 April 2026
     order = models.IntegerField(default=0)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        unique_together = ['name', 'company'] # New: 20 April 2026
         ordering = ['order', 'name']
 
     def __str__(self):
-        return self.label
+        return f"{self.label} ({self.company.name})"
