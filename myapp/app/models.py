@@ -81,7 +81,7 @@ class CustomFieldDefinition(models.Model):
     name = models.CharField(max_length=100, unique=True, help_text="Field identifier (used as key in JSON)")
     label = models.CharField(max_length=200, help_text="Display label")
     field_type = models.CharField(max_length=20, choices=FIELD_TYPES, default='text')
-    choices = models.JSONField(default=list, blank=True, help_text="For dropdown: list of [value, label] pairs")
+    choices = models.JSONField(default=list, blank=True, help_text="For dropdown: list of [value, label] pairs", null=True)
     is_required = models.BooleanField(default=False)
     placeholder = models.CharField(max_length=200, blank=True)
     help_text = models.CharField(max_length=200, blank=True)
