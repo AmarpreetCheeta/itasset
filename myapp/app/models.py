@@ -72,7 +72,8 @@ class Asset(models.Model):
     warranty_expiry = models.DateField(null=True, blank=True)
     
     # Assignment
-    assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_assets')
+    # assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_assets') # Deleted
+    assigned_to_name = models.CharField(max_length=255, blank=True, null=True, verbose_name="Assigned To") # New field instaed of assigned_to
     assigned_date = models.DateField(null=True, blank=True)
     
     # Additional Info
@@ -134,4 +135,6 @@ class CustomFieldDefinition(models.Model):
         ordering = ['order', 'name']
 
     def __str__(self):
-        return f"{self.label} ({self.company.name})"
+        if self.company:
+            return f"{self.label} ({self.company.name})"
+        return f"{self.label} (No Company)"

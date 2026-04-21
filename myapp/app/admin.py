@@ -16,7 +16,7 @@ class CompanyAdmin(admin.ModelAdmin):
 @admin.register(AssetCategory)
 class AssetCategoryAdmin(admin.ModelAdmin):
     list_display = ['name', 'company', 'icon']
-    exclude = ('company',)   # hide company from form
+    # exclude = ('company',)   # hide company from form
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -32,10 +32,10 @@ class AssetCategoryAdmin(admin.ModelAdmin):
 # --- Asset Admin with isolation ---
 @admin.register(Asset)
 class AssetAdmin(admin.ModelAdmin):
-    list_display = ['name', 'serial_number', 'company', 'status', 'assigned_to']
+    list_display = ['name', 'serial_number', 'company', 'status', 'assigned_to_name']
     list_filter = ['status', 'company']
     search_fields = ['name', 'serial_number']
-    exclude = ('company',)   # hide company from form
+    # exclude = ('company',)   # hide company from form
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -53,7 +53,7 @@ class AssetAdmin(admin.ModelAdmin):
 class CustomFieldDefinitionAdmin(admin.ModelAdmin):
     list_display = ['label', 'name', 'company', 'field_type', 'is_active']
     list_filter = ['field_type', 'is_active', 'company']
-    exclude = ('company',)
+    # exclude = ('company',)
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)

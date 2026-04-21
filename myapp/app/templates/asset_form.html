@@ -16,52 +16,73 @@
                 {% csrf_token %}
                 
                 <div class="row">
-                    <div class="col-md-6">
-                        <h5 class="mb-3">Basic Information</h5>
+                    <h5 class="mb-3">Basic Information</h5>
+                    <div class="col-md-6">                        
                         {{ form.name|as_crispy_field }}
+                    </div>                    
+                    <div class="col-md-6">             
                         {{ form.serial_number|as_crispy_field }}
+                    </div>                    
+                    <div class="col-md-6">                      
                         {{ form.category|as_crispy_field }}
+                    </div>                    
+                    <div class="col-md-6">                 
                         {{ form.status|as_crispy_field }}
-                    </div>
-                    <div class="col-md-6">
-                        <h5 class="mb-3">Hardware Details</h5>
+                    </div>                    
+                </div>
+                <div class="row">
+                    <h5 class="mb-3">Hardware Details</h5>
+                    <div class="col-md-6">                        
                         {{ form.manufacturer|as_crispy_field }}
+                    </div>
+                    <div class="col-md-6">                     
                         {{ form.model_number|as_crispy_field }}
+                    </div>
+                    <div class="col-md-6">                     
                         {{ form.location|as_crispy_field }}
                     </div>
                 </div>
                 
                 <div class="row">
-                    <div class="col-md-6">
-                        <h5 class="mb-3">Financial Details</h5>
+                    <h5 class="mb-3">Financial Details</h5>
+                    <div class="col-md-6">                        
                         {{ form.purchase_date|as_crispy_field }}
+                    </div>                    
+                    <div class="col-md-6">                      
                         {{ form.purchase_cost|as_crispy_field }}
+                    </div>                    
+                    <div class="col-md-6">                      
                         {{ form.warranty_expiry|as_crispy_field }}
+                    </div>                    
+                </div>
+                <div class="row">
+                    <h5 class="mb-3">Assignment</h5>
+                    <div class="col-md-6">                        
+                        {{ form.assigned_to_name|as_crispy_field }}
                     </div>
-                    <div class="col-md-6">
-                        <h5 class="mb-3">Assignment</h5>
-                        {{ form.assigned_to|as_crispy_field }}
+                    <div class="col-md-6">                        
                         {{ form.assigned_date|as_crispy_field }}
                     </div>
                 </div>
                 
                 <div class="row">
-                    <div class="col-12">
-                        <h5 class="mb-3">Additional Information</h5>
+                    <h5 class="mb-3">Additional Information</h5>
+                    <div class="col-md-6">                        
                         {{ form.notes|as_crispy_field }}
                     </div>
-                </div>
-                
-                <!-- Custom Fields Section -->
-                {% for field in form %}
-                    {% if field.name|slice:":7" == "custom_" %}
-                        {% if forloop.first %}
-                            <hr class="my-4">
-                            <h5 class="mb-3">Custom Fields</h5>
+                    <!-- Custom Fields Section -->
+                    {% for field in form %}
+                    <div class="col-md-6">
+                        {% if field.name|slice:":7" == "custom_" %}
+                            {% if forloop.first %}                            
+                                <hr class="my-4">
+                                <h5 class="mb-3">Custom Fields</h5>
+                            {% endif %}
+                            {{ field|as_crispy_field }}
                         {% endif %}
-                        {{ field|as_crispy_field }}
-                    {% endif %}
-                {% endfor %}
+                    </div>
+                    {% endfor %}
+                </div>
                 
                 <div class="mt-4">
                     <button type="submit" class="btn btn-primary">

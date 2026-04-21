@@ -79,8 +79,8 @@
                                 </span>
                             </td>
                             <td>
-                                    {% if asset.assigned_to %}
-                                        {{ asset.assigned_to.get_full_name|default:asset.assigned_to.username }}
+                                    {% if asset.assigned_to_name %}
+                                        {{ asset.assigned_to_name|default:"-" }}
                                     {% else %}
                                         -
                                     {% endif %}

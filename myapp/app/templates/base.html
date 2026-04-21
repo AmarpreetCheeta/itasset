@@ -156,10 +156,10 @@
                         <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
                             <i class="bi bi-speedometer2"></i> Dashboard
                         </a>
-                        <a class="nav-link {% if 'asset' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'asset_list' %}">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'asset_list' %}active{% endif %}" href="{% url 'asset_list' %}">
                             <i class="bi bi-hdd-stack"></i> Assets
                         </a>
-                        <a class="nav-link" href="{% url 'asset_create' %}">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'asset_create' %}active{% endif %}" href="{% url 'asset_create' %}">
                             <i class="bi bi-plus-circle"></i> Add Asset
                         </a>
                         {% if user.is_staff %}

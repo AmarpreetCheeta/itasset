@@ -5,9 +5,16 @@ from django.contrib import messages
 from django.db.models import Count, Q, Sum
 from django.core.paginator import Paginator
 from django.utils import timezone
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from app.models import Asset, AssetCategory, CustomFieldDefinition, Company, UserProfile
 from app.forms import SignUpForm, create_dynamic_asset_form, CustomFieldDefinitionForm, CompanyLoginForm
+
+
+def serialize_custom_value(value):
+    """Convert non-JSON-serializable types to JSON-serializable ones."""
+    if isinstance(value, (date, datetime)):
+        return value.isoformat()
+    return value
 
 
 # Update: 20 April 2026
@@ -143,7 +150,7 @@ def dashboard(request):
     categories = AssetCategory.objects.filter(company=request.user.profile.company).annotate(asset_count=Count('assets'))
     
     # Recent assets
-    recent_assets = Asset.objects.filter(company=request.user.profile.company).select_related('category', 'assigned_to')[:10]
+    recent_assets = Asset.objects.filter(company=request.user.profile.company).select_related('category')[:10]
     
     # Assets expiring warranty in next 30 days
     today = timezone.now().date()
@@ -173,7 +180,7 @@ def dashboard(request):
 @login_required
 def asset_list(request):
     company = request.user.profile.company # Added: 20 April 2026
-    assets = Asset.objects.filter(company=company).select_related('category', 'assigned_to')
+    assets = Asset.objects.filter(company=company).select_related('category')
     
     # Search
     search_query = request.GET.get('search', '')
@@ -182,7 +189,8 @@ def asset_list(request):
             Q(name__icontains=search_query) |
             Q(serial_number__icontains=search_query) |
             Q(manufacturer__icontains=search_query) |
-            Q(model_number__icontains=search_query)
+            Q(model_number__icontains=search_query) |
+            Q(assigned_to_name__icontains=search_query) 
         )
     
     # Filter by category
@@ -234,8 +242,8 @@ def asset_create(request):
             for field_name, value in form.cleaned_data.items():
                 if field_name.startswith('custom_'):
                     key = field_name.replace('custom_', '')
-                    if value is not None and value != '':
-                        custom_attrs[key] = value
+                    # Convert non-serializable values (like date) to string
+                    custom_attrs[key] = serialize_custom_value(value) if value is not None else ''
             
             asset.custom_attrs = custom_attrs
             asset.save()
@@ -262,8 +270,7 @@ def asset_update(request, pk):
             for field_name, value in form.cleaned_data.items():
                 if field_name.startswith('custom_'):
                     key = field_name.replace('custom_', '')
-                    if value is not None and value != '':
-                        custom_attrs[key] = value
+                    custom_attrs[key] = serialize_custom_value(value) if value is not None else ''
             
             asset.custom_attrs = custom_attrs
             asset.save()
@@ -316,7 +323,16 @@ def custom_field_create(request):
     if request.method == 'POST':
         form = CustomFieldDefinitionForm(request.POST)
         if form.is_valid():
-            form.save()
+            field = form.save(commit=False)  # don't save yet
+            # Assign company from the logged-in user's profile
+            # This works for both staff and superuser (if they have a profile)
+            if hasattr(request.user, 'profile') and request.user.profile.company:
+                field.company = request.user.profile.company
+            else:
+                # Fallback: if user has no profile (should not happen), show error
+                messages.error(request, 'User profile missing company. Contact admin.')
+                return redirect('custom_field_list')
+            field.save()
             messages.success(request, 'Custom field created successfully!')
             return redirect('custom_field_list')
     else:

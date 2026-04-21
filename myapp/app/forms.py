@@ -32,7 +32,7 @@ class AssetBaseForm(forms.ModelForm):
         fields = [
             'name', 'serial_number', 'category', 'status', 'manufacturer',
             'model_number', 'purchase_date', 'purchase_cost', 'warranty_expiry',
-            'assigned_to', 'assigned_date', 'location', 'notes'
+            'assigned_to_name', 'assigned_date', 'location', 'notes'
         ]
         widgets = {
             'purchase_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
@@ -47,8 +47,7 @@ class AssetBaseForm(forms.ModelForm):
             if field not in ['purchase_date', 'warranty_expiry', 'assigned_date']:
                 self.fields[field].widget.attrs['class'] = 'form-control'
         
-        self.fields['assigned_to'].queryset = User.objects.filter(is_active=True)
-        self.fields['assigned_to'].widget.attrs['class'] = 'form-select'
+        self.fields['assigned_to_name'].widget.attrs['class'] = 'form-control'
 
 def create_dynamic_asset_form(instance=None, category=None):
     """Create a form with dynamic custom fields based on definitions"""
@@ -69,12 +68,14 @@ def create_dynamic_asset_form(instance=None, category=None):
             'help_text': definition.help_text,
         }
         
-        if definition.placeholder:
-            field_kwargs['widget'] = forms.TextInput(attrs={'placeholder': definition.placeholder, 'class': 'form-control'})
+        # if definition.placeholder:
+        #     field_kwargs['widget'] = forms.TextInput(attrs={'placeholder': definition.placeholder, 'class': 'form-control'})
         
         # Set initial value if instance exists
-        if instance and instance.custom_attrs.get(definition.name):
-            field_kwargs['initial'] = instance.custom_attrs.get(definition.name)
+        # if instance and instance.custom_attrs.get(definition.name):
+        #     field_kwargs['initial'] = instance.custom_attrs.get(definition.name)
+        if instance:
+            field_kwargs['initial'] = instance.custom_attrs.get(definition.name, '')
         
         # Create field based on type
         if definition.field_type == 'text':

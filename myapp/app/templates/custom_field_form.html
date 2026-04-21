@@ -31,3 +31,26 @@
     </div>
 </div>
 {% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const fieldTypeSelect = document.getElementById('id_field_type');
+        const choicesField = document.getElementById('id_choices').closest('.mb-3'); // adjust class as needed
+        
+        function toggleChoicesField() {
+            if (fieldTypeSelect.value === 'select') {
+                choicesField.style.display = 'block';
+            } else {
+                choicesField.style.display = 'none';
+            }
+        }
+        
+        // Initial toggle
+        toggleChoicesField();
+        
+        // Listen for changes
+        fieldTypeSelect.addEventListener('change', toggleChoicesField);
+    });
+</script>
+{% endblock %}
