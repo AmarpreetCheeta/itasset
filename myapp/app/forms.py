@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth.models import User
 from django.db import models
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from .models import Asset, AssetCategory, CustomFieldDefinition
+from app.models import Asset, AssetCategory, CustomFieldDefinition, FaultRecord
 
 # Update: 20 April 2026
 class SignUpForm(UserCreationForm):
@@ -14,6 +14,11 @@ class SignUpForm(UserCreationForm):
     class Meta:
         model = User
         fields = ('username', 'first_name', 'last_name', 'email', 'company_id', 'password1', 'password2')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields:
+            self.fields[field].widget.attrs['class'] = 'form-control'
 
 
 # New: 20 April 2026:
@@ -127,4 +132,57 @@ class CustomFieldDefinitionForm(forms.ModelForm):
             'category': forms.Select(attrs={'class': 'form-select'}),
             'order': forms.NumberInput(attrs={'class': 'form-control'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+
+class ReportForm(forms.Form):
+    fields = forms.MultipleChoiceField(
+        choices=[],  # will be populated dynamically
+        widget=forms.CheckboxSelectMultiple,
+        required=True,
+        label="Select Fields to Include"
+    )
+    status = forms.ChoiceField(
+        choices=[('', 'All')] + Asset.STATUS_CHOICES,
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    category = forms.ModelChoiceField(
+        queryset=AssetCategory.objects.none(),
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    date_from = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
+    )
+    date_to = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
+    )
+    format = forms.ChoiceField(
+        choices=[('csv', 'CSV'), ('xlsx', 'Excel')],
+        initial='csv',
+        widget=forms.RadioSelect
+    )
+
+
+class AssetCategoryForm(forms.ModelForm):
+    class Meta:
+        model = AssetCategory
+        fields = ['name', 'description', 'icon']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'icon': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., bi-laptop'}),
+        }
+    
+
+class FaultReportForm(forms.ModelForm):
+    class Meta:
+        model = FaultRecord
+        fields = ['fault_description', 'severity']
+        widgets = {
+            'fault_description': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+            'severity': forms.Select(attrs={'class': 'form-select'}),
         }

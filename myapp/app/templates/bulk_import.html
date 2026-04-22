@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+            <h4>Bulk Import Assets</h4>
+        </div>
+        <div class="card-body">
+            <p>Upload a CSV or Excel file with the following columns:</p>
+            <ul>
+                <li><strong>name</strong> (required)</li>
+                <li><strong>serial_number</strong> (required)</li>
+                {% comment %} <li>manufacturer, model_number, status, purchase_cost, purchase_date, warranty_expiry, assigned_to_name, assigned_date, location, notes, category</li> {% endcomment %}
+            </ul>
+            <p>Download <a href="{% url 'import_template' %}?format=csv">sample template</a>.</p>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <input type="file" name="file" class="form-control" accept=".csv,.xlsx" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Upload & Import</button>
+                <a href="{% url 'asset_list' %}" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

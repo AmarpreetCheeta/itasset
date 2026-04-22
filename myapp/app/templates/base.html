@@ -137,6 +137,9 @@
             border-color: var(--primary-color);
             box-shadow: 0 0 0 0.2rem rgba(67,97,238,0.25);
         }
+        .nav-link{
+            font-size: 13px;
+        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -152,7 +155,7 @@
                         <h5 class="text-white mt-2">IT Asset Manager</h5>
                         <small class="text-white-50">v1.0</small>
                     </div>
-                    <nav class="nav flex-column">
+                    <nav class="nav flex-column sidebar-nav">
                         <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
                             <i class="bi bi-speedometer2"></i> Dashboard
                         </a>
@@ -162,13 +165,16 @@
                         <a class="nav-link {% if request.resolver_match.url_name == 'asset_create' %}active{% endif %}" href="{% url 'asset_create' %}">
                             <i class="bi bi-plus-circle"></i> Add Asset
                         </a>
+                        <a class="nav-link {% if request.resolver_match.url_name == 'category_list' %}active{% endif %}" href="{% url 'category_list' %}">
+                            <i class="bi bi-tags"></i> Categories
+                        </a>
                         {% if user.is_staff %}
                         <a class="nav-link {% if 'custom_field' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'custom_field_list' %}">
                             <i class="bi bi-gear"></i> Custom Fields
                         </a>
                         {% endif %}
                         <hr class="bg-light">
-                        <a class="nav-link" href="{% url 'password_change' %}">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'password_change' %}active{% endif %}" href="{% url 'password_change' %}">
                             <i class="bi bi-key"></i> Change Password
                         </a>
                         <form action="{% url 'logout' %}" method="post" class="d-inline">

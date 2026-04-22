@@ -44,7 +44,7 @@
                         <tr>
                             <th>Status</th>
                             <td>
-                                <span class="badge {% if asset.status == 'available' %}bg-success{% elif asset.status == 'assigned' %}bg-warning{% elif asset.status == 'maintenance' %}bg-danger{% else %}bg-secondary{% endif %} fs-6">
+                                <span class="badge {% if asset.status == 'available' %}bg-success{% elif asset.status == 'assigned' %}bg-info{% elif asset.status == 'maintenance' %}bg-danger{% elif asset.status == 'faulty' %}bg-danger{% else %}bg-secondary{% endif %} fs-6">
                                     {{ asset.get_status_display }}
                                 </span>
                             </td>
@@ -89,7 +89,7 @@
                         </tr>
                         <tr>
                             <th>Purchase Cost</th>
-                            <td>{% if asset.purchase_cost %}${% endif %}{{ asset.purchase_cost|default:"-" }}</td>
+                            <td>{% if asset.purchase_cost %}₹{% endif %}{{ asset.purchase_cost|default:"-" }}</td>
                         </tr>
                         <tr>
                             <th>Warranty Expiry</th>
@@ -122,6 +122,58 @@
                             <td>{{ asset.assigned_date|date:"Y-m-d"|default:"-" }}</td>
                         </tr>
                     </table>
+                </div>
+            </div>
+
+            <!-- Fault History -->
+            <div class="card mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Fault History</h5>
+                    <a href="{% url 'report_fault' asset.id %}" class="btn btn-sm btn-danger">
+                        <i class="bi bi-bug"></i> Report Fault
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% with faults=asset.fault_records.all %}
+                        {% if faults %}
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Description</th>
+                                            <th>Severity</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for fault in faults %}
+                                        <tr>
+                                            <td>{{ fault.reported_date|date:"Y-m-d H:i" }}</td>
+                                            <td>{{ fault.fault_description|truncatechars:50 }}</td>
+                                            <td>{{ fault.get_severity_display }}</td>
+                                            <td>
+                                                {% if fault.is_resolved %}
+                                                    <span class="badge bg-success">Resolved</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">Open</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if not fault.is_resolved %}
+                                                    <a href="{% url 'resolve_fault' fault.id %}" class="btn btn-sm btn-success">Mark Resolved</a>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-muted mb-0">No fault reports for this asset.</p>
+                        {% endif %}
+                    {% endwith %}
                 </div>
             </div>
             

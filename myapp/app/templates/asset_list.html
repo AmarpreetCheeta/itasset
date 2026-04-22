@@ -11,6 +11,96 @@
             <a href="{% url 'asset_create' %}" class="btn btn-primary">
                 <i class="bi bi-plus-circle"></i> Add New Asset
             </a>
+            <a href="{% url 'bulk_import' %}" class="btn btn-info">
+                <i class="bi bi-download"></i> Bulk Import
+            </a>
+            <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#customReportModal">
+                <i class="bi bi-bar-chart"></i> Custom Report
+            </button>
+        </div>
+    </div>
+
+    <!-- Custom Report Modal -->
+    <div class="modal fade" id="customReportModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title"><i class="bi bi-bar-chart"></i> Custom Report</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="customReportForm" method="get" action="{% url 'custom_report_export' %}">
+                    <div class="modal-body">
+                        <!-- Hidden inputs to pass current filters -->
+                        <input type="hidden" name="search" value="{{ search_query }}">
+                        <input type="hidden" name="category" value="{{ category_filter }}">
+                        <input type="hidden" name="status" value="{{ status_filter }}">
+                        
+                        <!-- Field Selection -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Select Fields to Include</label>
+                            <div class="row" id="fieldCheckboxes">
+                                <!-- Will be populated dynamically via JS or hardcoded -->
+                            </div>
+                        </div>
+                        
+                        <!-- Additional Filters -->
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label class="form-label">Status (Override)</label>
+                                <select name="report_status" class="form-select">
+                                    <option value="">All</option>
+                                    {% for val, label in status_choices %}
+                                    <option value="{{ val }}">{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Category</label>
+                                <select name="report_category" class="form-select">
+                                    <option value="">All</option>
+                                    {% for cat in categories %}
+                                    <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Date Range (Created At)</label>
+                                <select name="date_range" class="form-select">
+                                    <option value="">Any</option>
+                                    <option value="today">Today</option>
+                                    <option value="week">Last 7 days</option>
+                                    <option value="month">This month</option>
+                                    <option value="custom">Custom</option>
+                                </select>
+                                <div class="row mt-2" id="customDateRange" style="display:none;">
+                                    <div class="col">
+                                        <input type="date" name="date_from" class="form-control" placeholder="From">
+                                    </div>
+                                    <div class="col">
+                                        <input type="date" name="date_to" class="form-control" placeholder="To">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <label class="form-label">Export Format</label>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="format" value="csv" checked>
+                                <label class="form-check-label">CSV</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="format" value="xlsx">
+                                <label class="form-check-label">Excel</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-info">Generate Report</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
     
@@ -74,7 +164,7 @@
                             <td>{{ asset.category.name|default:"-" }}</td>
                             <td>{{ asset.manufacturer|default:"-" }}</td>
                             <td>
-                                <span class="badge {% if asset.status == 'available' %}bg-success{% elif asset.status == 'assigned' %}bg-warning{% elif asset.status == 'maintenance' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                <span class="badge {% if asset.status == 'available' %}bg-success{% elif asset.status == 'assigned' %}bg-info{% elif asset.status == 'maintenance' %}bg-danger{% elif asset.status == 'faulty' %}bg-danger{% else %}bg-secondary{% endif %}">
                                     {{ asset.get_status_display }}
                                 </span>
                             </td>
@@ -156,4 +246,48 @@
         margin: 0 2px;
     }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Predefine available fields (matching model + custom fields)
+    const availableFields = [
+        { value: 'name', label: 'Name' },
+        { value: 'serial_number', label: 'Serial Number' },
+        { value: 'category__name', label: 'Category' },
+        { value: 'status', label: 'Status' },
+        { value: 'manufacturer', label: 'Manufacturer' },
+        { value: 'model_number', label: 'Model Number' },
+        { value: 'purchase_date', label: 'Purchase Date' },
+        { value: 'purchase_cost', label: 'Purchase Cost' },
+        { value: 'warranty_expiry', label: 'Warranty Expiry' },
+        { value: 'assigned_to_name', label: 'Assigned To' },
+        { value: 'assigned_date', label: 'Assigned Date' },
+        { value: 'location', label: 'Location' },
+        { value: 'notes', label: 'Notes' }
+    ];
+    {% for cf in custom_fields %}
+    availableFields.push({ value: 'custom_{{ cf.name }}', label: '{{ cf.label }}' });
+    {% endfor %}
+    
+    const container = document.getElementById('fieldCheckboxes');
+    availableFields.forEach(field => {
+        const div = document.createElement('div');
+        div.className = 'col-md-4';
+        div.innerHTML = `
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="fields" value="${field.value}" id="field_${field.value}" checked>
+                <label class="form-check-label" for="field_${field.value}">${field.label}</label>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+    
+    // Toggle custom date range
+    const dateRangeSelect = document.querySelector('select[name="date_range"]');
+    const customDateDiv = document.getElementById('customDateRange');
+    dateRangeSelect.addEventListener('change', function() {
+        customDateDiv.style.display = this.value === 'custom' ? 'flex' : 'none';
+    });
+});
+</script>
 {% endblock %}
